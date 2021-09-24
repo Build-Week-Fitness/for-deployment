@@ -1,57 +1,91 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
-import './App.css';
+import "./App.css";
+import { Link, Route, Switch } from "react-router-dom";
+import { connect } from "react-redux";
+import ProtectedUsersRoute from "./components/user/ProtectedUsersRoute";
+import Classes from "./components/user/Classes";
+import ClassDetails from "./components/user/ClassDetails";
+import Login from "./components/Login";
+import Logout from "./components/Logout";
+import Registration from "./components/Registration";
+import Home from "./components/Home";
+import ProtectedInstructorsRoute from "./components/admin/ProtectedInstructorsRoute";
+import ClassesAdmin from "./components/admin/ClassesAdmin";
+import EditForm from "./components/admin/EditForm";
+import AddClass from "./components/admin/AddClass";
+import Bookings from "./components/user/Bookings";
 
-function App() {
-  const [date, setDate] = useState(null);
-  useEffect(() => {
-    async function getDate() {
-      const res = await fetch('/api/date');
-      const newDate = await res.text();
-      setDate(newDate);
-    }
-    getDate();
-  }, []);
+function App(props) {
   return (
-    <main>
-      <h1>Create React App + Go API</h1>
-      <h2>
-        Deployed with{' '}
-        <a
-          href="https://vercel.com/docs"
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          Vercel
-        </a>
-        !
-      </h2>
-      <p>
-        <a
-          href="https://github.com/vercel/vercel/tree/main/examples/create-react-app"
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          This project
-        </a>{' '}
-        was bootstrapped with{' '}
-        <a href="https://facebook.github.io/create-react-app/">
-          Create React App
-        </a>{' '}
-        and contains three directories, <code>/public</code> for static assets,{' '}
-        <code>/src</code> for components and content, and <code>/api</code>{' '}
-        which contains a serverless <a href="https://golang.org/">Go</a>{' '}
-        function. See{' '}
-        <a href="/api/date">
-          <code>api/date</code> for the Date API with Go
-        </a>
-        .
-      </p>
-      <br />
-      <h2>The date according to Go is:</h2>
-      <p>{date ? date : 'Loading date...'}</p>
-    </main>
+    <div className="App">
+      <header className="App-header">
+        <h1>Anywhere Fitness</h1>
+        <div className="nav-bar">
+          <nav>
+            <div className="nav-links">
+              <Link to="/">Home</Link>
+              {
+                props.role === "u" || localStorage.getItem("role") === "u" ? <Link to="/class">Classes</Link> : null
+              }
+              {
+                props.role === "u" || localStorage.getItem("role") === "u" ? <Link to="/bookings">Bookings</Link> : null
+              }
+              {
+                props.role === "i" || localStorage.getItem("role") === "i" ? <Link to="/add-class">Add a class</Link> : null
+              }
+              {
+                props.role === "i" || localStorage.getItem("role") === "i" ? <Link to="/class-admin">View classes</Link> : null
+              }
+              {
+                props.isLogin ? <Link to="/logout">Logout</Link> : <Link to="/login">Login</Link>
+              }
+            </div>
+          </nav>
+          <div className="welcome">
+            {props.isLogin &&
+              <h2 className="welcome-message">Welcome, {props.email ? props.email : localStorage.getItem("email")}</h2>
+            }
+          </div>
+        </div>
+
+      </header>
+
+      <Switch>
+        <ProtectedUsersRoute path="/bookings" component={Bookings} />
+
+        <ProtectedUsersRoute path="/class/:id" component={ClassDetails} />
+
+        <ProtectedUsersRoute path="/class" component={Classes} />
+
+        <ProtectedInstructorsRoute path="/add-class" component={AddClass} />
+
+        <ProtectedInstructorsRoute
+          path="/class-admin/edit-form/:id"
+          component={EditForm}
+        />
+
+        <ProtectedInstructorsRoute
+          path="/class-admin"
+          component={ClassesAdmin}
+        />
+
+        <Route path="/login" component={Login} />
+
+        <Route path="/logout" component={Logout} />
+
+        <Route path="/register" component={Registration} />
+
+        <Route path="/" component={Home} />
+      </Switch>
+    </div>
   );
 }
 
-export default App;
+const mapStateToProps = (state) => {
+  return {
+    isLogin: state.loginReducer.isLogin,
+    role: state.loginReducer.role,
+    email: state.loginReducer.email,
+  };
+};
+
+export default connect(mapStateToProps)(App);
